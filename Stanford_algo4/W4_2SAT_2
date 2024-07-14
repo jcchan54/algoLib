@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Aug 20 11:38:23 2023
+
+@author: johnsonchan
+"""
+
+
+filename = "/Users/johnsonchan/Documents/CourseraCourseWorks/Stanford_algo4/W4unittest.txt"
+filename = "/Users/johnsonchan/Documents/CourseraCourseWorks/Stanford_algo4/W4sat1.txt"
+
+import numpy as np
+import random
+f = open(filename, 'r')
+
+
+ls = f.readline()#[1:]
+n = int(ls)
+N = n*2
+graph = {i: [] for i in range(-n, n+1) if i != 0}
+graph_r = {i: [] for i in range(-n, n+1) if i != 0}
+ls = f.readline()
+while ls:
+    data = list(map(int, ls.split(' ')))
+    graph[-data[0]] += [data[1]]
+    graph[-data[1]] += [data[0]]
+    graph_r[data[1]] += [-data[0]]
+    graph_r[data[0]] += [-data[1]]
+    ls = f.readline()
+f.close()
+#%%
+clauses = [list(map(int, i.split(' '))) for i in ls]
+eles = np.array(clauses).flatten()
+eles = set(abs(eles.astype(int)))#.union(-1*eles.astype(int))
+def sat(c,state):
+    return np.sign(np.sign(c[0])*state[abs(c[0])] + np.sign(c[1])*state[abs(c[1])] +0.1).astype(int)
+N=len(eles)
+
+np.random.seed(10)
+random.seed(13)
+
+# initialize
+state = {ele: random.choice([-1,1]) for ele in eles}
+for cnt in range(2*(N**2)):
+    sat_ls = [sat(c, state) for c in clauses]
+
+    if sum(sat_ls) == len(sat_ls):
+        print("all Sat")
+        break
+    for i,s in enumerate(sat_ls):
+        if s < 0:
+            break
+    ele_change = abs(clauses[i][random.randint(0,1)])
+    state[ele_change] *= -1
+    
+    if cnt %1000 ==0:
+        print(cnt,sum(sat_ls)- len(sat_ls))
+        
+        
+#%%
+
+class KosarajuSCCs():
+    def __init__(self,graph:dict, rev_graph):
+        self.graph = graph
+        self.rev_graph = rev_graph
+        self.nodes = set(graph.keys()).union(set(rev_graph.keys()))
+        
+        
+        self.time = 0
+        self.s = None
+        self.function = dict()
+        self.explored = []
+        self.leaders = dict()
+        
+        
+    def reset_global(self):
+        self.time = 0
+        self.s = None
+        self.function = dict()
+        self.explored = []
+        self.leaders = dict()
+        
+                
+    def DFS(self,G:dict,i:int):
+        self.explored.append(i)
+        if self.s not in self.leaders:
+            self.leaders[self.s] = []
+        self.leaders[self.s].append(i)
+        
+        for t in G[i]:
+            if t not in self.explored:
+                self.DFS(G,t)
+                
+        self.time = self.time+1
+        self.function[i] = self.time
+        return
+    def fullDFS(self, G:dict):
+        self.reset_global()
+        for i in list(G.keys())[::-1]:
+            
+            if i not in self.explored:
+                self.s = i
+                self.DFS(G,i)
+        return self.function, self.leaders
+    def transform_graph(self,G:dict,f:dict):
+        G_T = dict()
+        for key in G:
+            G_T[f[key]] = [f[e] for e in G[key]]
+        return G_T
+    def rev_transform_graph(self,G_T:dict,f:dict):
+        G = dict()
+        f_rev = {f[key]:key for key in f}
+        for key in G_T:
+            G[f_rev[key]] = [f_rev[e] for e in G_T[key]]
+        return G
+    def findFCCs(self):
+        print("Find leaders")
+        f1, l1 = self.fullDFS(self.rev_graph)
+        print("Compute transformed Graph")
+        G_T = self.transform_graph(self.graph, f1)
+        print("find SCCs")
+        f2, l2 = self.fullDFS(G_T)
+        return self.rev_transform_graph(l2,f1)
+
+#%%
+
+k = KosarajuSCCs(graph,graph_r)
+l2 = k.findFCCs()
+    
+    
+
