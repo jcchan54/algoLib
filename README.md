@@ -6,6 +6,9 @@ A collection of algorithm implementations and solutions to coding problems from 
 
 ## Table of Contents
 1. [course 1](Stanford_algo1)
+	- [minimum cut](Stanford_algo1/min_cut.py)
+	- [merge sort](mergesort.py)
+	- [quick sort](quick_sort.py)
 2. [course 2](Stanford_algo2)
 3. [course 3](Stanford_algo3)
 4. [course 4](Stanford_algo4)
